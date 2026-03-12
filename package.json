@@ -2,7 +2,7 @@
   "name": "my-app",
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "npx ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "migrate:generate": "drizzle-kit generate",
