@@ -1,5 +1,5 @@
-import { db } from "../db/client.js";
-import { items } from "../db/schema.js";
+import { db } from "../db/client";
+import { items } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 export const itemsRepository = {
