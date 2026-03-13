@@ -6,6 +6,11 @@ import { CreateUserDTO, UpdateUserDTO } from "../dtos/users.dto.js";
 import { createItemDto, updateItemDto } from "../dtos/items.dto.js";
 import { z } from "zod";
 
+// This file sets up a Hono app that generates an OpenAPI document based on the defined routes and schemas. It uses the OpenAPIHono class to define the API metadata
+// and the Scalar UI to serve the documentation. The actual route handlers are no-ops
+// because this app is only used for generating OpenAPI metadata, not for handling real requests.
+
+
 const openapi = new OpenAPIHono();
 
 const OPENAPI_DOCUMENT_CONFIG = {

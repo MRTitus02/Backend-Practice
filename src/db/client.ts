@@ -1,3 +1,6 @@
+// This file sets up the drizzle client for PostgreSQL
+// It uses the connection string from the environment variables
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import dotenv from "dotenv";
