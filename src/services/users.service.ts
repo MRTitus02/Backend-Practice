@@ -1,4 +1,5 @@
 import { usersRepository } from "../repositories/users.repository";
+import { CreateUserDTO, UpdateUserDTO } from "../dtos/users.dto";
 
 export const usersService = {
   async getAll() {
@@ -10,12 +11,12 @@ export const usersService = {
     return user;
   },
 
-  async create(data: { name: string; email: string }) {
+  async create(data: CreateUserDTO) {
     const [user] = await usersRepository.create(data);
     return user;
   },
 
-  async update(id: number, data: any) {
+  async update(id: number, data: UpdateUserDTO) {
     const [user] = await usersRepository.update(id, data);
     return user;
   },

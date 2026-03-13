@@ -3,6 +3,8 @@ import { Hono } from 'hono'
 import { healthController } from './controllers/health.controller';
 import { itemsController } from "./controllers/items.controller";
 import { usersController } from './controllers/users.controller';
+import { docsApp } from './docs/openapi';
+import { createAutoRoute } from './utils/scalargen.js';
 
 const app = new Hono()
 
@@ -24,6 +26,9 @@ app.get("/items", itemsController.getAll);
 app.post("/items", itemsController.create);
 app.put("/items/:id", itemsController.update);
 app.delete("/items/:id", itemsController.delete);
+
+app.route("/docs", docsApp);
+app.route("/docs/*", docsApp);
 
 serve({
   fetch: app.fetch,
