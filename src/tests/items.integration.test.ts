@@ -2,12 +2,18 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { startServer } from "../index";
 import { db } from "../db/client";
-import { items, users } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { items, mailJobs, users } from "../db/schema";
 
 let server: any;
 let baseUrl = "http://localhost:3000";
 
 beforeAll(async () => {
+  // start with a clean db so tests are isolated
+  await db.delete(mailJobs);
+  await db.delete(items);
+  await db.delete(users);
+
   server = startServer(0);
   await new Promise<void>((resolve) => {
     server.once("listening", resolve);
@@ -20,6 +26,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // cleanup so tests can be re-run without conflicts
+  await db.delete(mailJobs);
   await db.delete(items);
   await db.delete(users);
   server.close();
@@ -27,6 +34,7 @@ afterAll(async () => {
 
 describe("Items CRUD (integration)", () => {
   let token: string;
+  let userId: number;
   let itemId: number;
 
   it("creates a user and logs in", async () => {

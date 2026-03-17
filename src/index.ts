@@ -6,8 +6,10 @@ import { itemsController } from "./controllers/items.controller";
 import { usersController } from "./controllers/users.controller";
 import { authController } from "./controllers/auth.controller";
 import { authMiddleware } from "./middleware/auth";
+import { mailController } from "./controllers/mail.controller";
 import { docsApp } from "./docs/openapi";
 import { createAutoRoute } from "./utils/scalargen.js";
+import { startMailWorker } from "./workers/mailWorker";
 
 dotenv.config();
 
@@ -23,6 +25,9 @@ app.get('/', (c) => {
 app.post("/auth/register", authController.register);
 app.post("/auth/login", authController.login);
 app.post("/auth/refresh", authController.refresh);
+
+// Mail (protected)
+app.post("/mail/send", authMiddleware.authenticate, mailController.send);
 
 // Users CRUD (protected)
 app.use("/users/*", authMiddleware.authenticate);
@@ -54,4 +59,6 @@ export const startServer = (port = 3000) =>
 
 if (process.env.NODE_ENV !== "test") {
   startServer();
+  const intervalMs = Number(process.env.MAIL_WORKER_INTERVAL_MS) || 10_000;
+  startMailWorker(intervalMs);
 }
