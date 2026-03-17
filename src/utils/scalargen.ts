@@ -12,6 +12,7 @@ export type AutoRouteConfig = {
   querySchema?: any;
   responseSchema?: any;
   responses?: Record<string, any>;
+  security?: any[];
 };
 
 export const createAutoRoute = ({
@@ -25,6 +26,7 @@ export const createAutoRoute = ({
   querySchema,
   responseSchema,
   responses,
+  security,
 }: AutoRouteConfig) => {
   const request: any = {};
   if (paramSchema) request.params = paramSchema;
@@ -63,5 +65,6 @@ export const createAutoRoute = ({
     description,
     request: Object.keys(request).length ? request : undefined,
     responses: finalResponses,
+    security,
   });
 };

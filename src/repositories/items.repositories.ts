@@ -5,6 +5,11 @@ import { eq } from "drizzle-orm";
 export const itemsRepository = {
   getAll: () => db.select().from(items),
 
+  getById: async (id: number) => {
+    const [item] = await db.select().from(items).where(eq(items.id, id));
+    return item;
+  },
+
   create: ({ title, description, userId }: any) =>
     db.insert(items).values({ title, description, userId }).returning(),
 
@@ -16,5 +21,5 @@ export const itemsRepository = {
 
   delete: (id: number) =>
     db.delete(items)
-      .where(eq(items.id, id))
+      .where(eq(items.id, id)),
 };

@@ -7,7 +7,11 @@ export const itemsService = {
     return itemsRepository.getAll();
   },
 
-  async create(data: CreateItemDto) {
+  async getById(id: number) {
+    return itemsRepository.getById(id);
+  },
+
+  async create(data: CreateItemDto & { userId?: number }) {
     const [item] = await itemsRepository.create(data);
     return item;
   },
