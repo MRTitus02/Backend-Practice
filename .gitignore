@@ -30,3 +30,4 @@ lerna-debug.log*
 drizzle/
 dist/
 dist\
+Tasks.md

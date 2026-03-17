@@ -11,7 +11,7 @@ import { createAutoRoute } from "./utils/scalargen.js";
 
 dotenv.config();
 
-const app = new Hono();
+export const app = new Hono();
 
 app.route('/health', healthController)
 
@@ -44,9 +44,14 @@ app.delete("/items/:id", itemsController.delete);
 app.route("/docs", docsApp);
 app.route("/docs/*", docsApp);
 
-serve({
-  fetch: app.fetch,
-  port: 3000
-}, (info) => {
-  console.log(`Server is running on http://localhost:${info.port}`)
-})
+export const startServer = (port = 3000) =>
+  serve({
+    fetch: app.fetch,
+    port,
+  }, (info) => {
+    console.log(`Server is running on http://localhost:${info.port}`);
+  });
+
+if (process.env.NODE_ENV !== "test") {
+  startServer();
+}
