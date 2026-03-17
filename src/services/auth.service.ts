@@ -24,14 +24,15 @@ const sanitizeUser = (user: any): AuthenticatedUser => {
 };
 
 export const authService = {
-  async register({ name, email, password }: { name: string; email: string; password: string }) {
+  async register({ name, email, password, role }: { name: string; email: string; password: string; role?: string }) {
     const existing = await usersRepository.getByEmail(email);
     if (existing) {
       throw new Error("A user with that email already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const [user] = await usersRepository.create({ name, email, passwordHash });
+    const userRole = role ?? "user";
+    const [user] = await usersRepository.create({ name, email, passwordHash, role: userRole });
 
     const payload: JwtPayload = { sub: String(user.id), role: user.role ?? "user" };
     const accessToken = signAccessToken(payload);

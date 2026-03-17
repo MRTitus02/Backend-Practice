@@ -9,6 +9,11 @@ export const CreateUserDTO = z
       .string()
       .min(8, "Password must be at least 8 characters")
       .openapi({ example: "StrongP@ssw0rd" }),
+    role: z
+      .enum(["user", "admin"])
+      .optional()
+      .default("user")
+      .openapi({ example: "user" }),
   })
   .openapi("CreateUserRequest");
 
@@ -21,6 +26,10 @@ export const UpdateUserDTO = z
       .min(8, "Password must be at least 8 characters")
       .optional()
       .openapi({ example: "StrongP@ssw0rd" }),
+    role: z
+      .enum(["user", "admin"])
+      .optional()
+      .openapi({ example: "user" }),
   })
   .openapi("UpdateUserRequest");
 

@@ -15,6 +15,11 @@ export const registerSchema = z
       .min(8, "Password must be at least 8 characters long")
       .max(128, "Password must be at most 128 characters long")
       .openapi({ example: "StrongP@ssw0rd" }),
+    role: z
+      .enum(["user", "admin"])
+      .optional()
+      .default("user")
+      .openapi({ example: "user" }),
   })
   .openapi("RegisterPayload");
 
