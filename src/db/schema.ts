@@ -1,8 +1,8 @@
 // This file defines the database schema using Drizzle ORM for a PostgreSQL database
 // It includes two tables: users and items, with a one-to-many relationship
 
-import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
-import { email } from "zod";
+import { pgTable, serial, text, integer, timestamp, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {

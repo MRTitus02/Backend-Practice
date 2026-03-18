@@ -8,6 +8,37 @@ export const itemsController = {
     return c.json(items);
   },
 
+  async search(c: any) {
+    try {
+      const q = c.req.query("q");
+      const limit = Number(c.req.query("limit")) || 10;
+      const offset = Number(c.req.query("offset")) || 0;
+      const userId = c.req.query("userId") ? Number(c.req.query("userId")) : undefined;
+      const currentUser = c.get("user");
+
+      if (!q) {
+        return c.json({ error: "Query parameter 'q' is required" }, 400);
+      }
+
+      // If not admin, only search own items
+      const searchUserId = currentUser?.role === "admin" ? userId : currentUser?.id;
+
+      const results = await itemsService.search(q, limit, offset, searchUserId);
+
+      return c.json({
+        data: results,
+        pagination: {
+          limit,
+          offset,
+          hasMore: results.length === limit,
+        },
+      });
+    } catch (error) {
+      console.error("Search error:", error);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  },
+
   async create(c: any) {
     const body = await c.req.json();
     const currentUser = c.get("user");

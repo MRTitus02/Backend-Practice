@@ -11,6 +11,11 @@ export const itemsService = {
     return itemsRepository.getById(id);
   },
 
+  async search(query: string, limit: number = 10, offset: number = 0, userId?: number) {
+    const result = await itemsRepository.search(query, limit, offset, userId);
+    return (result.rows as any[]) || [];
+  },
+
   async create(data: CreateItemDto & { userId?: number }) {
     const [item] = await itemsRepository.create(data);
     return item;
