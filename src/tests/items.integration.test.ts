@@ -7,13 +7,10 @@ import { items, mailJobs, users } from "../db/schema";
 
 let server: any;
 let baseUrl = "http://localhost:3000";
+let createdUserId: number | null = null;
+let createdItemId: number | null = null;
 
 beforeAll(async () => {
-  // start with a clean db so tests are isolated
-  await db.delete(mailJobs);
-  await db.delete(items);
-  await db.delete(users);
-
   server = startServer(0);
   await new Promise<void>((resolve) => {
     server.once("listening", resolve);
@@ -25,10 +22,13 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // cleanup so tests can be re-run without conflicts
-  await db.delete(mailJobs);
-  await db.delete(items);
-  await db.delete(users);
+  // cleanup only the records created by this test suite
+  if (createdItemId) {
+    await db.delete(items).where(eq(items.id, createdItemId));
+  }
+  if (createdUserId) {
+    await db.delete(users).where(eq(users.id, createdUserId));
+  }
   server.close();
 });
 
@@ -41,10 +41,13 @@ describe("Items CRUD (integration)", () => {
     const email = `test+${Date.now()}@example.com`;
     const password = "TestPass123";
 
-    await request(baseUrl)
+    const registerRes = await request(baseUrl)
       .post("/auth/register")
       .send({ name: "Test User", email, password })
       .expect(201);
+
+    userId = registerRes.body.user?.id;
+    createdUserId = userId;
 
     const login = await request(baseUrl)
       .post("/auth/login")
@@ -61,10 +64,10 @@ describe("Items CRUD (integration)", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({ title: "Integration Item", description: "Created in test" })
       .expect(201);
-
     expect(res.body.id).toBeDefined();
     expect(res.body.title).toBe("Integration Item");
     itemId = res.body.id;
+    createdItemId = itemId;
   });
 
   it("lists items", async () => {

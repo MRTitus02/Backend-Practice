@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 
 let server: any;
 let baseUrl = "http://localhost:3000";
+let createdUserId: number | null = null;
+let createdMailJobId: number | null = null;
 
 beforeAll(async () => {
   server = startServer(0);
@@ -21,9 +23,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await db.delete(mailJobs);
-  await db.delete(items);
-  await db.delete(users);
+  if (createdMailJobId) {
+    await db.delete(mailJobs).where(eq(mailJobs.id, createdMailJobId));
+  }
+  if (createdUserId) {
+    await db.delete(users).where(eq(users.id, createdUserId));
+  }
   server.close();
 });
 
@@ -42,6 +47,7 @@ describe("Mail queue & worker (integration)", () => {
       .expect(201);
 
     userId = registerRes.body.user?.id;
+    createdUserId = userId;
 
     const login = await request(baseUrl)
       .post("/auth/login")
@@ -61,6 +67,8 @@ describe("Mail queue & worker (integration)", () => {
 
     expect(res.body.id).toBeDefined();
     expect(res.body.status).toBe("pending");
+
+    createdMailJobId = res.body.id;
   });
 
   it("processes pending jobs via worker", async () => {
