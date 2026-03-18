@@ -264,6 +264,40 @@ openapi.openapi(
   noopHandler
 );
 
+// Mail
+const MailJobSchema = z
+  .object({
+    id: z.number().describe("Mail job ID"),
+    toEmail: z.string().email().describe("Recipient email"),
+    subject: z.string().describe("Email subject"),
+    body: z.string().describe("Email body"),
+    status: z.string().describe("Job status"),
+  })
+  .openapi("MailJob");
+
+const SendMailSchema = z
+  .object({
+    to: z.string().email().describe("Recipient email"),
+    subject: z.string().min(1).describe("Email subject"),
+    body: z.string().min(1).describe("Email body"),
+  })
+  .openapi("SendMailPayload");
+
+openapi.openapi(
+  createAutoRoute({
+    method: "post",
+    path: "/mail/send",
+    tag: "Mail",
+    summary: "Queue an email to be sent",
+    requestSchema: SendMailSchema,
+    security: [{ bearerAuth: [] }],
+    responses: {
+      201: { description: "Mail queued", content: { "application/json": { schema: MailJobSchema } } },
+    },
+  }),
+  noopHandler
+);
+
 export const docsApp = new Hono();
 
 docsApp.get("/openapi.json", (c) => {
