@@ -5,20 +5,29 @@ services:
     image: postgres:15
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root0
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
 
-  # Optional: local mail testing service (useful for Day 2 + Mailpit integration)
-  # mailpit:
-  #   image: axllent/mailpit:latest
-  #   ports:
-  #     - "8025:8025"
-  #     - "1025:1025"
+  # Optional: local mail testing service
+    mailpit:
+        image: axllent/mailpit
+        container_name: mailpit
+        restart: unless-stopped
+        volumes:
+            - ./data:/data
+        ports:
+            - 8025:8025
+            - 1025:1025
+        environment:
+            MP_MAX_MESSAGES: 5000
+            MP_DATABASE: /data/mailpit.db
+            MP_SMTP_AUTH_ACCEPT_ANY: 1
+            MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
 volumes:
   db-data:
