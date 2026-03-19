@@ -8,7 +8,7 @@ import { items, mailJobs, users } from "../db/schema";
 let server: any;
 let baseUrl = "http://localhost:3000";
 let createdUserId: number | null = null;
-let createdItemId: number | null = null;
+let itemIds: number[] = [];
 
 beforeAll(async () => {
   server = startServer(0);
@@ -23,8 +23,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // cleanup only the records created by this test suite
-  if (createdItemId) {
-    await db.delete(items).where(eq(items.id, createdItemId));
+  for (const id of itemIds) {
+    await db.delete(items).where(eq(items.id, id));
   }
   if (createdUserId) {
     await db.delete(users).where(eq(users.id, createdUserId));
@@ -35,7 +35,6 @@ afterAll(async () => {
 describe("Items CRUD (integration)", () => {
   let token: string;
   let userId: number;
-  let itemId: number;
 
   it("creates a user and logs in", async () => {
     const email = `test+${Date.now()}@example.com`;
@@ -58,16 +57,23 @@ describe("Items CRUD (integration)", () => {
     expect(typeof token).toBe("string");
   });
 
-  it("creates an item", async () => {
-    const res = await request(baseUrl)
-      .post("/items")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ title: "Integration Item", description: "Created in test" })
-      .expect(201);
-    expect(res.body.id).toBeDefined();
-    expect(res.body.title).toBe("Integration Item");
-    itemId = res.body.id;
-    createdItemId = itemId;
+  it("creates multiple items for search testing", async () => {
+    const itemsData = [
+      { title: "Laptop Computer", description: "A powerful laptop for work" },
+      { title: "Wireless Mouse", description: "Ergonomic wireless mouse" },
+      { title: "Coffee Mug", description: "Ceramic coffee mug" },
+      { title: "Notebook", description: "Spiral notebook for notes" },
+      { title: "Headphones", description: "Noise cancelling headphones" },
+    ];
+
+    for (const item of itemsData) {
+      const res = await request(baseUrl)
+        .post("/items")
+        .set("Authorization", `Bearer ${token}`)
+        .send(item)
+        .expect(201);
+      itemIds.push(res.body.id);
+    }
   });
 
   it("lists items", async () => {
@@ -77,12 +83,53 @@ describe("Items CRUD (integration)", () => {
       .expect(200);
 
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.some((item: any) => item.id === itemId)).toBe(true);
+    expect(res.body.length).toBeGreaterThanOrEqual(5); // We created 5 items
+  });
+
+  it("searches items", async () => {
+    const res = await request(baseUrl)
+      .get("/items/search?q=laptop")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body.data).toBeDefined();
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0].title).toContain("Laptop");
+    expect(res.body.data[0]).toHaveProperty("similarity");
+    expect(res.body.pagination).toBeDefined();
+  });
+
+  it("searches items with pagination", async () => {
+    const res = await request(baseUrl)
+      .get("/items/search?q=computer&limit=1&offset=0")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.pagination.limit).toBe(1);
+    expect(res.body.pagination.offset).toBe(0);
+  });
+
+  it("searches items with no results", async () => {
+    const res = await request(baseUrl)
+      .get("/items/search?q=nonexistentitem")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body.data).toEqual([]);
+  });
+
+  it("requires query parameter", async () => {
+    await request(baseUrl)
+      .get("/items/search")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(400);
   });
 
   it("updates an item", async () => {
     const res = await request(baseUrl)
-      .put(`/items/${itemId}`)
+      .put(`/items/${itemIds[0]}`)
       .set("Authorization", `Bearer ${token}`)
       .send({ title: "Updated Title" })
       .expect(200);
@@ -92,7 +139,7 @@ describe("Items CRUD (integration)", () => {
 
   it("deletes an item", async () => {
     await request(baseUrl)
-      .delete(`/items/${itemId}`)
+      .delete(`/items/${itemIds[0]}`)
       .set("Authorization", `Bearer ${token}`)
       .expect(200);
 
@@ -101,6 +148,6 @@ describe("Items CRUD (integration)", () => {
       .set("Authorization", `Bearer ${token}`)
       .expect(200);
 
-    expect(list.body.some((item: any) => item.id === itemId)).toBe(false);
+    expect(list.body.some((item: any) => item.id === itemIds[0])).toBe(false);
   });
 });

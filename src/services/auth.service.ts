@@ -25,14 +25,15 @@ const sanitizeUser = (user: any): AuthenticatedUser => {
 
 export const authService = {
   async register({ name, email, password, role }: { name: string; email: string; password: string; role?: string }) {
-    const existing = await usersRepository.getByEmail(email);
+    const normalizedEmail = email.toLowerCase();
+    const existing = await usersRepository.getByEmail(normalizedEmail);
     if (existing) {
       throw new Error("A user with that email already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const userRole = role ?? "user";
-    const [user] = await usersRepository.create({ name, email, passwordHash, role: userRole });
+    const [user] = await usersRepository.create({ name, email: normalizedEmail, passwordHash, role: userRole });
 
     const payload: JwtPayload = { sub: String(user.id), role: user.role ?? "user" };
     const accessToken = signAccessToken(payload);
@@ -48,7 +49,8 @@ export const authService = {
   },
 
   async login({ email, password }: { email: string; password: string }) {
-    const user = await usersRepository.getByEmail(email);
+    const normalizedEmail = email.toLowerCase();
+    const user = await usersRepository.getByEmail(normalizedEmail);
     if (!user) {
       throw new Error("Invalid credentials");
     }

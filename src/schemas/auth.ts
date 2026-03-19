@@ -4,22 +4,18 @@ export const registerSchema = z
   .object({
     name: z
       .string()
-      .min(1, "Name is required")
-      .openapi({ example: "Jane Doe" }),
+      .min(1, "Name is required"),
     email: z
       .string()
-      .email("Must be a valid email")
-      .openapi({ example: "jane.doe@example.com" }),
+      .email("Must be a valid email"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters long")
-      .max(128, "Password must be at most 128 characters long")
-      .openapi({ example: "StrongP@ssw0rd" }),
+      .max(128, "Password must be at most 128 characters long"),
     role: z
       .enum(["user", "admin"])
       .optional()
-      .default("user")
-      .openapi({ example: "user" }),
+      .default("user"),
   })
   .openapi("RegisterPayload");
 
@@ -27,12 +23,10 @@ export const loginSchema = z
   .object({
     email: z
       .string()
-      .email("Must be a valid email")
-      .openapi({ example: "jane.doe@example.com" }),
+      .email("Must be a valid email"),
     password: z
       .string()
-      .min(1, "Password is required")
-      .openapi({ example: "StrongP@ssw0rd" }),
+      .min(1, "Password is required"),
   })
   .openapi("LoginPayload");
 
@@ -40,8 +34,7 @@ export const refreshTokenSchema = z
   .object({
     refreshToken: z
       .string()
-      .min(1, "Refresh token is required")
-      .openapi({ example: "some-refresh-token" }),
+      .min(1, "Refresh token is required"),
   })
   .openapi("RefreshTokenPayload");
 

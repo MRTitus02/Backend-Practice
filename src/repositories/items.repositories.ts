@@ -1,6 +1,6 @@
 import { db } from "../db/client";
 import { items } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 
 export const itemsRepository = {
   getAll: () => db.select().from(items),
@@ -8,6 +8,46 @@ export const itemsRepository = {
   getById: async (id: number) => {
     const [item] = await db.select().from(items).where(eq(items.id, id));
     return item;
+  },
+
+  search: async (query: string, limit: number = 10, offset: number = 0, userId?: number) => {
+    const similarityThreshold = 0.1;
+
+    // Ensure pg_trgm extension is available
+    await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+
+    if (userId) {
+      return db.execute(
+        sql`
+          SELECT 
+            id, 
+            title, 
+            description, 
+            user_id as "userId", 
+            similarity(title || ' ' || description, ${query}) as similarity
+          FROM items
+          WHERE similarity(title || ' ' || description, ${query}) > ${similarityThreshold}
+            AND user_id = ${userId}
+          ORDER BY similarity DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+      );
+    }
+
+    return db.execute(
+      sql`
+        SELECT 
+          id, 
+          title, 
+          description, 
+          user_id as "userId", 
+          similarity(title || ' ' || description, ${query}) as similarity
+        FROM items
+        WHERE similarity(title || ' ' || description, ${query}) > ${similarityThreshold}
+        ORDER BY similarity DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    );
   },
 
   create: ({ title, description, userId }: any) =>

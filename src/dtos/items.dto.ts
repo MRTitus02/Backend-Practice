@@ -2,15 +2,15 @@ import { z } from "@hono/zod-openapi";
 
 export const createItemDto = z
   .object({
-    title: z.string().min(1).openapi({ example: "New Item" }),
-    description: z.string().min(1).openapi({ example: "A description for the new item." }),
+    title: z.string().min(1),
+    description: z.string().min(1),
   })
   .openapi("CreateItemRequest");
 
 export const updateItemDto = z
   .object({
-    title: z.string().optional().openapi({ example: "Updated Item" }),
-    description: z.string().optional().openapi({ example: "An updated description." }),
+    title: z.string().optional(),
+    description: z.string().optional(),
   })
   .openapi("UpdateItemRequest");
 

@@ -29,7 +29,6 @@ const OPENAPI_DOCUMENT_CONFIG = {
       },
     },
   },
-  security: [{ bearerAuth: [] }],
 };
 
 const UserSchema = z
@@ -49,6 +48,27 @@ const ItemSchema = z
   })
   .openapi("Item");
 
+const SearchItemSchema = z
+  .object({
+    id: z.number().describe("Item ID"),
+    title: z.string().describe("Item title"),
+    description: z.string().describe("Item description"),
+    userId: z.number().describe("ID of the user who owns the item"),
+    similarity: z.number().describe("Similarity score for search results"),
+  })
+  .openapi("SearchItem");
+
+const SearchResponseSchema = z
+  .object({
+    data: z.array(SearchItemSchema).describe("Array of search results"),
+    pagination: z.object({
+      limit: z.number().describe("Number of results per page"),
+      offset: z.number().describe("Number of results to skip"),
+      hasMore: z.boolean().describe("Whether there are more results available"),
+    }),
+  })
+  .openapi("SearchResponse");
+
 const UsersSchema = z.array(UserSchema).describe("Array of users").openapi("Users");
 const ItemsSchema = z.array(ItemSchema).describe("Array of items").openapi("Items");
 
@@ -57,6 +77,12 @@ const MessageSchema = z
     message: z.string(),
   })
   .openapi("Message");
+
+const ErrorSchema = z
+  .object({
+    error: z.string(),
+  })
+  .openapi("Error");
 
 const TokenSchema = z
   .object({
@@ -222,6 +248,27 @@ openapi.openapi(
 
 openapi.openapi(
   createAutoRoute({
+    method: "get",
+    path: "/items/search",
+    tag: "Items",
+    summary: "Search items by query",
+    querySchema: z.object({
+      q: z.string().min(1).describe("Search query string"),
+      limit: z.string().optional().describe("Maximum number of results (default: 10)"),
+      offset: z.string().optional().describe("Number of results to skip (default: 0)"),
+      userId: z.string().optional().describe("Filter by user ID (admin only)"),
+    }),
+    responseSchema: SearchResponseSchema,
+    security: [{ bearerAuth: [] }],
+    responses: {
+      400: { description: "Bad request - missing query parameter", content: { "application/json": { schema: ErrorSchema } } },
+    },
+  }),
+  noopHandler
+);
+
+openapi.openapi(
+  createAutoRoute({
     method: "post",
     path: "/items",
     tag: "Items",
@@ -311,7 +358,6 @@ docsApp.get("/openapi.json", (c) => {
       bearerFormat: "JWT",
     },
   };
-  document.security = [{ bearerAuth: [] }];
   return c.json(document);
 });
 
