@@ -35,7 +35,6 @@ afterAll(async () => {
 describe("Items CRUD (integration)", () => {
   let token: string;
   let userId: number;
-  let itemIds: number[] = [];
 
   it("creates a user and logs in", async () => {
     const email = `test+${Date.now()}@example.com`;

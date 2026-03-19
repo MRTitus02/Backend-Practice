@@ -13,6 +13,9 @@ export const itemsRepository = {
   search: async (query: string, limit: number = 10, offset: number = 0, userId?: number) => {
     const similarityThreshold = 0.1;
 
+    // Ensure pg_trgm extension is available
+    await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+
     if (userId) {
       return db.execute(
         sql`
