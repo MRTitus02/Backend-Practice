@@ -345,6 +345,81 @@ openapi.openapi(
   noopHandler
 );
 
+// File schemas
+const UploadUrlSchema = z
+  .object({
+    url: z.string().describe("Presigned upload URL"),
+    fileId: z.string().describe("Unique file ID"),
+  })
+  .openapi("UploadUrl");
+
+const DownloadUrlSchema = z
+  .object({
+    url: z.string().describe("Presigned download URL"),
+  })
+  .openapi("DownloadUrl");
+
+// File routes
+openapi.openapi(
+  createAutoRoute({
+    method: "post",
+    path: "/files/upload-url",
+    tag: "Files",
+    summary: "Generate a presigned upload URL for file upload",
+    requestSchema: z.object({
+      mimeType: z.string().describe("MIME type of the file to upload"),
+    }),
+    security: [{ bearerAuth: [] }],
+    responses: {
+      201: {
+        description: "Upload URL generated successfully",
+        content: { "application/json": { schema: UploadUrlSchema } },
+      },
+      400: {
+        description: "Bad request - missing mimeType",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+      500: {
+        description: "Internal server error",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+    },
+  }),
+  noopHandler
+);
+
+openapi.openapi(
+  createAutoRoute({
+    method: "get",
+    path: "/files/{id}/download",
+    tag: "Files",
+    summary: "Generate a presigned download URL for file retrieval",
+    paramSchema: z.object({
+      id: z.string().describe("File ID"),
+    }),
+    security: [{ bearerAuth: [] }],
+    responses: {
+      200: {
+        description: "Download URL generated successfully",
+        content: { "application/json": { schema: DownloadUrlSchema } },
+      },
+      403: {
+        description: "Forbidden - insufficient permissions",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+      404: {
+        description: "File not found",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+      500: {
+        description: "Internal server error",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+    },
+  }),
+  noopHandler
+);
+
 export const docsApp = new Hono();
 
 docsApp.get("/openapi.json", (c) => {

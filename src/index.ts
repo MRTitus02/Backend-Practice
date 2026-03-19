@@ -7,6 +7,7 @@ import { usersController } from "./controllers/users.controller";
 import { authController } from "./controllers/auth.controller";
 import { authMiddleware } from "./middleware/auth";
 import { mailController } from "./controllers/mail.controller";
+import fileRoutes from "./controllers/file.controller";
 import { docsApp } from "./docs/openapi";
 import { createAutoRoute } from "./utils/scalargen.js";
 import { startMailWorker } from "./workers/mailWorker";
@@ -46,6 +47,12 @@ app.get("/items", itemsController.getAll);
 app.post("/items", itemsController.create);
 app.put("/items/:id", itemsController.update);
 app.delete("/items/:id", itemsController.delete);
+
+// File upload/download routes (protected)
+app.use("/files/*", authMiddleware.authenticate);
+app.use("/files", authMiddleware.authenticate);
+app.route("/files", fileRoutes);
+app.route("/files/*", fileRoutes);
 
 app.route("/docs", docsApp);
 app.route("/docs/*", docsApp);
