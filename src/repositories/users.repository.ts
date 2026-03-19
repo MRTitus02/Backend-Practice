@@ -25,7 +25,8 @@ export const usersRepository = {
 
   getByEmail: async (email: string) => {
     try {
-      const [user] = await db.select().from(users).where(eq(users.email, email));
+      const normalizedEmail = email.toLowerCase();
+      const [user] = await db.select().from(users).where(eq(users.email, normalizedEmail));
       return user;
     } catch (error) {
       mapDbError(error);
