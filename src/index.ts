@@ -42,7 +42,6 @@ app.delete("/users/:id", usersController.delete);
 // Items CRUD (protected)
 app.use("/items/*", authMiddleware.authenticate);
 app.use("/items", authMiddleware.authenticate);
-app.get("/items/search", itemsController.search);
 app.get("/items", itemsController.getAll);
 app.post("/items", itemsController.create);
 app.put("/items/:id", itemsController.update);

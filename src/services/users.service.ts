@@ -3,8 +3,8 @@ import { usersRepository } from "../repositories/users.repository";
 import { CreateUserDTO, UpdateUserDTO } from "../dtos/users.dto";
 
 export const usersService = {
-  async getAll() {
-    return usersRepository.getAll();
+  async getAll(query: string = "", limit: number = 10, offset: number = 0, sort: string = "ASC") {
+    return usersRepository.getAll(query, limit, offset, sort);
   },
 
   async getById(id: number) {
