@@ -7,8 +7,24 @@ export const usersController = {
       return c.json({ message: "Forbidden" }, 403);
     }
 
-    const users = await usersService.getAll();
-    return c.json(users);
+    const q = c.req.query("q") || "";
+    const limit = Number(c.req.query("limit")) || 10;
+    const offset = Number(c.req.query("offset")) || 0;
+    const sort = (c.req.query("sort") || "ASC").toUpperCase();
+
+    if (sort !== "ASC" && sort !== "DESC") {
+      return c.json({ message: "Invalid sort parameter. Must be ASC or DESC" }, 400);
+    }
+
+    const result = await usersService.getAll(q, limit, offset, sort);
+    return c.json({
+      data: result,
+      pagination: {
+        limit,
+        offset,
+        hasMore: result.length === limit,
+      },
+    });
   },
 
   async getById(c: any) {

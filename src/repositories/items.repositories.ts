@@ -1,9 +1,19 @@
 import { db } from "../db/client";
 import { items } from "../db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, asc, desc } from "drizzle-orm";
 
 export const itemsRepository = {
-  getAll: () => db.select().from(items),
+  getAll: async (limit: number = 10, offset: number = 0, userId?: number, sort: string = "ASC") => {
+    let dbQuery = db.select().from(items);
+
+    if (userId) {
+      dbQuery = dbQuery.where(eq(items.userId, userId));
+    }
+
+    const orderBy = sort === "DESC" ? desc(items.id) : asc(items.id);
+    const results = await dbQuery.orderBy(orderBy).limit(limit).offset(offset);
+    return results;
+  },
 
   getById: async (id: number) => {
     const [item] = await db.select().from(items).where(eq(items.id, id));

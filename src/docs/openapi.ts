@@ -48,26 +48,25 @@ const ItemSchema = z
   })
   .openapi("Item");
 
-const SearchItemSchema = z
-  .object({
-    id: z.number().describe("Item ID"),
-    title: z.string().describe("Item title"),
-    description: z.string().describe("Item description"),
-    userId: z.number().describe("ID of the user who owns the item"),
-    similarity: z.number().describe("Similarity score for search results"),
-  })
-  .openapi("SearchItem");
+const PaginationSchema = z.object({
+  limit: z.number().describe("Number of results per page"),
+  offset: z.number().describe("Number of results to skip"),
+  hasMore: z.boolean().describe("Whether there are more results available"),
+});
 
-const SearchResponseSchema = z
+const PaginatedUsersResponseSchema = z
   .object({
-    data: z.array(SearchItemSchema).describe("Array of search results"),
-    pagination: z.object({
-      limit: z.number().describe("Number of results per page"),
-      offset: z.number().describe("Number of results to skip"),
-      hasMore: z.boolean().describe("Whether there are more results available"),
-    }),
+    data: z.array(UserSchema).describe("Array of users"),
+    pagination: PaginationSchema,
   })
-  .openapi("SearchResponse");
+  .openapi("PaginatedUsersResponse");
+
+const PaginatedItemsResponseSchema = z
+  .object({
+    data: z.array(ItemSchema).describe("Array of items"),
+    pagination: PaginationSchema,
+  })
+  .openapi("PaginatedItemsResponse");
 
 const UsersSchema = z.array(UserSchema).describe("Array of users").openapi("Users");
 const ItemsSchema = z.array(ItemSchema).describe("Array of items").openapi("Items");
@@ -166,8 +165,14 @@ openapi.openapi(
     method: "get",
     path: "/users",
     tag: "Users",
-    summary: "Get all users",
-    responseSchema: UsersSchema,
+    summary: "Get all users with optional search, pagination, and sorting",
+    querySchema: z.object({
+      q: z.string().optional().describe("Search query string (searches name and email)"),
+      limit: z.string().optional().describe("Maximum number of results (default: 10)"),
+      offset: z.string().optional().describe("Number of results to skip (default: 0)"),
+      sort: z.enum(["ASC", "DESC"]).optional().describe("Sort order by ID (default: ASC)"),
+    }),
+    responseSchema: PaginatedUsersResponseSchema,
     security: [{ bearerAuth: [] }],
   }),
   noopHandler
@@ -239,30 +244,16 @@ openapi.openapi(
     method: "get",
     path: "/items",
     tag: "Items",
-    summary: "Get all items",
-    responseSchema: ItemsSchema,
-    security: [{ bearerAuth: [] }],
-  }),
-  noopHandler
-);
-
-openapi.openapi(
-  createAutoRoute({
-    method: "get",
-    path: "/items/search",
-    tag: "Items",
-    summary: "Search items by query",
+    summary: "Get all items with optional search, pagination, and sorting",
     querySchema: z.object({
-      q: z.string().min(1).describe("Search query string"),
+      q: z.string().optional().describe("Search query string (searches title and description)"),
       limit: z.string().optional().describe("Maximum number of results (default: 10)"),
       offset: z.string().optional().describe("Number of results to skip (default: 0)"),
       userId: z.string().optional().describe("Filter by user ID (admin only)"),
+      sort: z.enum(["ASC", "DESC"]).optional().describe("Sort order by ID (default: ASC)"),
     }),
-    responseSchema: SearchResponseSchema,
+    responseSchema: PaginatedItemsResponseSchema,
     security: [{ bearerAuth: [] }],
-    responses: {
-      400: { description: "Bad request - missing query parameter", content: { "application/json": { schema: ErrorSchema } } },
-    },
   }),
   noopHandler
 );
@@ -340,6 +331,81 @@ openapi.openapi(
     security: [{ bearerAuth: [] }],
     responses: {
       201: { description: "Mail queued", content: { "application/json": { schema: MailJobSchema } } },
+    },
+  }),
+  noopHandler
+);
+
+// File schemas
+const UploadUrlSchema = z
+  .object({
+    url: z.string().describe("Presigned upload URL"),
+    fileId: z.string().describe("Unique file ID"),
+  })
+  .openapi("UploadUrl");
+
+const DownloadUrlSchema = z
+  .object({
+    url: z.string().describe("Presigned download URL"),
+  })
+  .openapi("DownloadUrl");
+
+// File routes
+openapi.openapi(
+  createAutoRoute({
+    method: "post",
+    path: "/files/upload-url",
+    tag: "Files",
+    summary: "Generate a presigned upload URL for file upload",
+    requestSchema: z.object({
+      mimeType: z.string().describe("MIME type of the file to upload"),
+    }),
+    security: [{ bearerAuth: [] }],
+    responses: {
+      201: {
+        description: "Upload URL generated successfully",
+        content: { "application/json": { schema: UploadUrlSchema } },
+      },
+      400: {
+        description: "Bad request - missing mimeType",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+      500: {
+        description: "Internal server error",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+    },
+  }),
+  noopHandler
+);
+
+openapi.openapi(
+  createAutoRoute({
+    method: "get",
+    path: "/files/{id}/download",
+    tag: "Files",
+    summary: "Generate a presigned download URL for file retrieval",
+    paramSchema: z.object({
+      id: z.string().describe("File ID"),
+    }),
+    security: [{ bearerAuth: [] }],
+    responses: {
+      200: {
+        description: "Download URL generated successfully",
+        content: { "application/json": { schema: DownloadUrlSchema } },
+      },
+      403: {
+        description: "Forbidden - insufficient permissions",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+      404: {
+        description: "File not found",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
+      500: {
+        description: "Internal server error",
+        content: { "application/json": { schema: ErrorSchema } },
+      },
     },
   }),
   noopHandler

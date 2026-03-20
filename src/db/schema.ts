@@ -34,3 +34,14 @@ export const mailJobs = pgTable("mail_jobs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Files table for S3 pre-signed uploads/downloads with role-based access
+export const files = pgTable("files", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  roleAccess: text("role_access").notNull(),
+  mimeType: text("mime_type").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

@@ -1,6 +1,6 @@
 import { db } from "../db/client";
 import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql, asc, desc } from "drizzle-orm";
 
 const mapDbError = (error: any) => {
   if (typeof error?.message === "string" && error.message.includes("Failed query")) {
@@ -12,7 +12,19 @@ const mapDbError = (error: any) => {
 };
 
 export const usersRepository = {
-  getAll: () => db.select().from(users),
+  getAll: async (query: string = "", limit: number = 10, offset: number = 0, sort: string = "ASC") => {
+    let dbQuery = db.select().from(users);
+
+    if (query.trim()) {
+      dbQuery = dbQuery.where(
+        sql`${users.email} ILIKE ${"%" + query + "%"} OR ${users.name} ILIKE ${"%" + query + "%"}`
+      );
+    }
+
+    const orderBy = sort === "DESC" ? desc(users.id) : asc(users.id);
+    const results = await dbQuery.orderBy(orderBy).limit(limit).offset(offset);
+    return results;
+  },
 
   getById: async (id: number) => {
     try {

@@ -10,6 +10,8 @@
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1012.0",
+    "@aws-sdk/s3-request-presigner": "^3.1012.0",
     "@hono/node-server": "^1.19.11",
     "@hono/zod-openapi": "^1.2.2",
     "@scalar/hono-api-reference": "^0.10.3",
@@ -19,6 +21,7 @@
     "hono": "^4.12.7",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
+    "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
