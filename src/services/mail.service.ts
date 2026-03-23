@@ -1,7 +1,20 @@
 import { mailJobsRepository } from "../repositories/mailJobs.repository";
+import nodemailer from "nodemailer";
 
-const MAIL_API_URL = process.env.MAIL_API_URL || "http://localhost:8025/api/send";
-const MAIL_API_KEY = process.env.MAIL_API_KEY;
+const SMTP_HOST = process.env.SMTP_HOST || "localhost";
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || "1025");
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: false, // true for 465, false for other ports
+  auth: SMTP_USER && SMTP_PASS ? {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  } : undefined,
+});
 
 export const mailService = {
   enqueueMail: async (toEmail: string, subject: string, body: string) => {
@@ -21,30 +34,16 @@ export const mailService = {
       const nextAttempts = (job.attempts ?? 0) + 1;
 
       try {
-        const res = await fetch(MAIL_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(MAIL_API_KEY ? { Authorization: `Bearer ${MAIL_API_KEY}` } : {}),
-          },
-          body: JSON.stringify({
-            to: job.toEmail,
-            subject: job.subject,
-            body: job.body,
-          }),
+        await transporter.sendMail({
+          from: process.env.SMTP_FROM || "noreply@example.com",
+          to: job.toEmail,
+          subject: job.subject,
+          text: job.body,
         });
 
-        if (!res.ok) {
-          const text = await res.text();
-          await mailJobsRepository.updateStatus(job.id, "failed", {
-            attempts: nextAttempts,
-            lastError: `HTTP ${res.status}: ${text}`,
-          });
-        } else {
-          await mailJobsRepository.updateStatus(job.id, "sent", {
-            attempts: nextAttempts,
-          });
-        }
+        await mailJobsRepository.updateStatus(job.id, "sent", {
+          attempts: nextAttempts,
+        });
       } catch (error: any) {
         await mailJobsRepository.updateStatus(job.id, "failed", {
           attempts: nextAttempts,

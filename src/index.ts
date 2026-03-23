@@ -9,7 +9,6 @@ import { authMiddleware } from "./middleware/auth";
 import { mailController } from "./controllers/mail.controller";
 import fileRoutes from "./controllers/file.controller";
 import { docsApp } from "./docs/openapi";
-import { createAutoRoute } from "./utils/scalargen.js";
 import { startMailWorker } from "./workers/mailWorker";
 
 dotenv.config();
